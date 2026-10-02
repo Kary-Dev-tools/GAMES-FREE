@@ -56,8 +56,8 @@ const commands = [
         .setDescription("Filtrar por plataforma")
         .setRequired(false)
         .addChoices(
-          { name: "🟪 Epic Games Store", value: "epic" },
-          { name: "🟦 Steam", value: "steam" },
+          { name: "⚫ Epic Games Store", value: "epic" },
+          { name: "🔵 Steam", value: "steam" },
           { name: "🎮 Ambas", value: "all" }
         )
     ),
