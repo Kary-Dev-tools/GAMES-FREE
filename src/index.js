@@ -138,35 +138,33 @@ async function checkGuild(guild, force = false) {
 }
 
 /**
- * Aplica alterações de perfil no bot (Nome, Avatar e Banner).
+ * Aplica alterações de perfil no bot LOCALMENTE no servidor (per-guild).
+ * Usa guild.members.me para alterar nickname e avatar apenas naquele servidor.
+ * OBS: Discord não suporta banner per-guild, então banner foi removido.
  */
-async function applyProfileChanges({ name, avatar, banner }) {
+async function applyProfileChanges(guild, { name, avatar }) {
   const changes = [];
+  const me = guild.members.me;
 
-  if (name && name.trim() && name.trim() !== client.user.username) {
+  if (!me) {
+    return ["⚠️ Não foi possível encontrar o bot neste servidor."];
+  }
+
+  if (name && name.trim()) {
     try {
-      await client.user.setUsername(name.trim());
-      changes.push(`• Nome alterado para: **${name.trim()}**`);
+      await me.setNickname(name.trim());
+      changes.push(`• Apelido alterado neste servidor para: **${name.trim()}**`);
     } catch (err) {
-      changes.push(`⚠️ Nome: ${err.message}`);
+      changes.push(`⚠️ Apelido: ${err.message}`);
     }
   }
 
   if (avatar) {
     try {
-      await client.user.setAvatar(avatar);
-      changes.push("• Foto de perfil (avatar) atualizada com sucesso!");
+      await me.setAvatar(avatar);
+      changes.push("• Foto de perfil (avatar) atualizada neste servidor com sucesso!");
     } catch (err) {
       changes.push(`⚠️ Avatar: ${err.message}`);
-    }
-  }
-
-  if (banner) {
-    try {
-      await client.user.setBanner(banner);
-      changes.push("• Banner do perfil atualizado com sucesso!");
-    } catch (err) {
-      changes.push(`⚠️ Banner: ${err.message}`);
     }
   }
 
@@ -185,10 +183,10 @@ async function registerCommands() {
 
     new SlashCommandBuilder()
       .setName("perfil")
-      .setDescription("Altera o nome, avatar e banner do bot via arquivos do computador ou links.")
+      .setDescription("Altera o apelido e avatar do bot localmente neste servidor.")
       .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild.bitfield)
       .addStringOption((opt) =>
-        opt.setName("nome").setDescription("Novo nome para o bot (1 a 32 caracteres)").setRequired(false)
+        opt.setName("nome").setDescription("Novo apelido para o bot neste servidor (1 a 32 caracteres)").setRequired(false)
       )
       .addAttachmentOption((opt) =>
         opt
@@ -200,18 +198,6 @@ async function registerCommands() {
         opt
           .setName("avatar_link")
           .setDescription("🌐 Ou envie um link direto da imagem de avatar")
-          .setRequired(false)
-      )
-      .addAttachmentOption((opt) =>
-        opt
-          .setName("banner_arquivo")
-          .setDescription("📁 Escolha o arquivo de banner do seu computador")
-          .setRequired(false)
-      )
-      .addStringOption((opt) =>
-        opt
-          .setName("banner_link")
-          .setDescription("🌐 Ou envie um link direto da imagem de banner")
           .setRequired(false)
       ),
 
@@ -371,26 +357,22 @@ client.on("interactionCreate", async (interaction) => {
         const nome = interaction.options.getString("nome");
         const avatarFile = interaction.options.getAttachment("avatar_arquivo");
         const avatarLink = interaction.options.getString("avatar_link");
-        const bannerFile = interaction.options.getAttachment("banner_arquivo");
-        const bannerLink = interaction.options.getString("banner_link");
 
         const avatarSource = avatarFile?.url || avatarLink;
-        const bannerSource = bannerFile?.url || bannerLink;
 
-        const changes = await applyProfileChanges({
+        const changes = await applyProfileChanges(interaction.guild, {
           name: nome,
-          avatar: avatarSource,
-          banner: bannerSource
+          avatar: avatarSource
         });
 
         if (changes.length === 0) {
           return interaction.editReply({
-            content: "ℹ️ Nenhuma opção de nome, avatar ou banner foi enviada."
+            content: "ℹ️ Nenhuma opção de nome ou avatar foi enviada."
           });
         }
 
         return interaction.editReply({
-          content: `✅ **Perfil do bot atualizado!**\n\n${changes.join("\n")}`
+          content: `✅ **Perfil do bot atualizado neste servidor!**\n\n${changes.join("\n")}`
         });
       }
 
@@ -526,7 +508,7 @@ client.on("interactionCreate", async (interaction) => {
       if (id === "cfg_avatar_file") {
         await interaction.deferReply({ flags: MessageFlags.Ephemeral });
         await interaction.editReply({
-          content: "📁 **Abrindo o Explorador de Arquivos no seu computador...**\nSelecione o arquivo da imagem para a foto de perfil (avatar)."
+          content: "📁 **Abrindo o Explorador de Arquivos no seu computador...**\nSelecione o arquivo da imagem para a foto de perfil (avatar) neste servidor."
         });
 
         const selectedFilePath = await openWindowsFilePicker("Selecione a Imagem para o Avatar do Bot");
@@ -540,9 +522,9 @@ client.on("interactionCreate", async (interaction) => {
 
         try {
           const imageBuffer = fs.readFileSync(selectedFilePath);
-          await client.user.setAvatar(imageBuffer);
+          await interaction.guild.members.me.setAvatar(imageBuffer);
           return interaction.followUp({
-            content: `✅ **Avatar atualizado com sucesso a partir do arquivo:**\n\`${selectedFilePath}\``,
+            content: `✅ **Avatar atualizado neste servidor com sucesso a partir do arquivo:**\n\`${selectedFilePath}\``,
             flags: MessageFlags.Ephemeral
           });
         } catch (fileErr) {
@@ -553,36 +535,8 @@ client.on("interactionCreate", async (interaction) => {
         }
       }
 
-      // 📁 Banner pelo Explorador de Arquivos do Windows
-      if (id === "cfg_banner_file") {
-        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
-        await interaction.editReply({
-          content: "📁 **Abrindo o Explorador de Arquivos no seu computador...**\nSelecione o arquivo da imagem para o banner do perfil."
-        });
-
-        const selectedFilePath = await openWindowsFilePicker("Selecione a Imagem para o Banner do Bot");
-
-        if (!selectedFilePath) {
-          return interaction.followUp({
-            content: "⚠️ Nenhum arquivo foi selecionado ou a seleção foi cancelada no Explorador de Arquivos.\n\n*Dica: Você também pode usar o comando `/perfil` anexando o banner diretamente pelo Discord.*",
-            flags: MessageFlags.Ephemeral
-          });
-        }
-
-        try {
-          const imageBuffer = fs.readFileSync(selectedFilePath);
-          await client.user.setBanner(imageBuffer);
-          return interaction.followUp({
-            content: `✅ **Banner atualizado com sucesso a partir do arquivo:**\n\`${selectedFilePath}\``,
-            flags: MessageFlags.Ephemeral
-          });
-        } catch (fileErr) {
-          return interaction.followUp({
-            content: `❌ Falha ao aplicar o banner do arquivo: ${fileErr.message}`,
-            flags: MessageFlags.Ephemeral
-          });
-        }
-      }
+      // ℹ️ Banner per-guild não é suportado pela API do Discord.
+      // O botão de banner foi removido do painel de controle.
 
       // 🧪 Testar Envio
       if (id === "cfg_run_test") {
@@ -657,12 +611,10 @@ client.on("interactionCreate", async (interaction) => {
 
         const name = interaction.fields.getTextInputValue("bot_name");
         const avatar = interaction.fields.getTextInputValue("bot_avatar");
-        const banner = interaction.fields.getTextInputValue("bot_banner");
 
-        const changes = await applyProfileChanges({
+        const changes = await applyProfileChanges(interaction.guild, {
           name,
-          avatar: avatar?.trim() || null,
-          banner: banner?.trim() || null
+          avatar: avatar?.trim() || null
         });
 
         if (changes.length === 0) {
@@ -670,7 +622,7 @@ client.on("interactionCreate", async (interaction) => {
         }
 
         return interaction.editReply({
-          content: `✅ **Perfil atualizado com sucesso!**\n\n${changes.join("\n")}`
+          content: `✅ **Perfil atualizado neste servidor com sucesso!**\n\n${changes.join("\n")}`
         });
       }
     }
