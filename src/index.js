@@ -139,14 +139,16 @@ async function checkGuild(guild, force = false) {
 
 /**
  * Aplica alterações de perfil no bot LOCALMENTE no servidor (per-guild).
- * Usa guild.members.me para alterar nickname e avatar apenas naquele servidor.
- * OBS: Discord não suporta banner per-guild, então banner foi removido.
+ * Usa guild.members.fetchMe() para obter o GuildMember completo e
+ * alterar nickname e avatar apenas naquele servidor.
  */
 async function applyProfileChanges(guild, { name, avatar }) {
   const changes = [];
-  const me = guild.members.me;
 
-  if (!me) {
+  let me;
+  try {
+    me = await guild.members.fetchMe();
+  } catch {
     return ["⚠️ Não foi possível encontrar o bot neste servidor."];
   }
 
@@ -161,7 +163,7 @@ async function applyProfileChanges(guild, { name, avatar }) {
 
   if (avatar) {
     try {
-      await me.setAvatar(avatar);
+      await me.edit({ avatar });
       changes.push("• Foto de perfil (avatar) atualizada neste servidor com sucesso!");
     } catch (err) {
       changes.push(`⚠️ Avatar: ${err.message}`);
@@ -210,8 +212,8 @@ async function registerCommands() {
           .setDescription("Filtrar por plataforma")
           .setRequired(false)
           .addChoices(
-            { name: "🟪 Epic Games Store", value: "epic" },
-            { name: "🟦 Steam", value: "steam" },
+            { name: "⚫ Epic Games Store", value: "epic" },
+            { name: "🔵 Steam", value: "steam" },
             { name: "🎮 Ambas", value: "all" }
           )
       ),
@@ -429,7 +431,7 @@ client.on("interactionCreate", async (interaction) => {
         const res = await checkGuild(interaction.guild, force);
 
         return interaction.editReply({
-          content: `✅ Verificação concluída!\n\n📢 **Resultados:**\n• 🟪 Epic Games: **${res.epic}** anúncio(s) enviado(s)\n• 🟦 Steam: **${res.steam}** anúncio(s) enviado(s)`
+          content: `✅ Verificação concluída!\n\n📢 **Resultados:**\n• ⚫ Epic Games: **${res.epic}** anúncio(s) enviado(s)\n• 🔵 Steam: **${res.steam}** anúncio(s) enviado(s)`
         });
       }
 
@@ -522,7 +524,8 @@ client.on("interactionCreate", async (interaction) => {
 
         try {
           const imageBuffer = fs.readFileSync(selectedFilePath);
-          await interaction.guild.members.me.setAvatar(imageBuffer);
+          const me = await interaction.guild.members.fetchMe();
+          await me.edit({ avatar: imageBuffer });
           return interaction.followUp({
             content: `✅ **Avatar atualizado neste servidor com sucesso a partir do arquivo:**\n\`${selectedFilePath}\``,
             flags: MessageFlags.Ephemeral
