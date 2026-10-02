@@ -3,13 +3,13 @@ import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "disc
 const PLATFORM_THEMES = {
   steam: {
     name: "Steam",
-    emoji: "🟦",
+    emoji: "🔵",
     color: 0x1a9fff,
     footer: "Steam • Resgate e adicione à sua biblioteca!"
   },
   epic: {
     name: "Epic Games Store",
-    emoji: "🟪",
+    emoji: "⚫",
     color: 0x0078f2,
     footer: "Epic Games Store • Resgate e o jogo será seu para sempre!"
   }
