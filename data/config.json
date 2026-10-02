@@ -1,0 +1,21 @@
+{
+  "checkIntervalMinutes": 10,
+  "platforms": {
+    "steam": {
+      "enabled": true,
+      "channelId": "1555615088440770682",
+      "roleId": null,
+      "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Steam_icon_logo.svg/512px-Steam_icon_logo.svg.png",
+      "bannerUrl": null,
+      "color": 1744895
+    },
+    "epic": {
+      "enabled": true,
+      "channelId": "1555616213944635402",
+      "roleId": null,
+      "logoUrl": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Epic_Games_logo.svg/512px-Epic_Games_logo.svg.png",
+      "bannerUrl": null,
+      "color": 30962
+    }
+  }
+}
