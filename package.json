@@ -1,0 +1,19 @@
+{
+  "name": "freegames-discord-bot",
+  "version": "1.0.0",
+  "description": "Bot Discord para anunciar jogos gratuitos da Steam e Epic Games Store.",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "deploy": "node src/deploy-commands.js",
+    "test": "node --check src/index.js && node --check src/deploy-commands.js"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "dependencies": {
+    "discord.js": "^14.27.0",
+    "dotenv": "^17.2.2"
+  }
+}
