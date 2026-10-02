@@ -21,7 +21,7 @@ export function buildConfigPanel(config) {
     .setColor(0x00d26a)
     .setTitle("🎮 PAINEL DE CONTROLE — GAMES FREE")
     .setDescription(
-      "Painel central para gerenciamento das publicações automáticas da **Steam** e **Epic Games**, além da personalização de **Nome, Avatar e Banner** do bot."
+      "Painel central para gerenciamento das publicações automáticas da **Steam** e **Epic Games**, além da personalização de **Apelido e Avatar** do bot neste servidor."
     )
     .addFields(
       {
@@ -73,10 +73,6 @@ export function buildConfigPanel(config) {
       .setLabel("📁 Avatar (Explorador)")
       .setStyle(ButtonStyle.Primary),
     new ButtonBuilder()
-      .setCustomId("cfg_banner_file")
-      .setLabel("📁 Banner (Explorador)")
-      .setStyle(ButtonStyle.Primary),
-    new ButtonBuilder()
       .setCustomId("cfg_refresh")
       .setLabel("🔄 Atualizar")
       .setStyle(ButtonStyle.Secondary)
@@ -112,17 +108,17 @@ export function buildChannelSelect(platform) {
 }
 
 /**
- * Modal para configurar o perfil do bot via 🌐 LINK (Nome, Avatar e Banner)
+ * Modal para configurar o perfil do bot via 🌐 LINK (Apelido e Avatar — local ao servidor)
  */
 export function buildProfileModal(currentName = "") {
   return new ModalBuilder()
     .setCustomId("modal_profile_link")
-    .setTitle("🌐 Configurar Perfil por Link")
+    .setTitle("🌐 Configurar Perfil (Servidor)")
     .addComponents(
       new ActionRowBuilder().addComponents(
         new TextInputBuilder()
           .setCustomId("bot_name")
-          .setLabel("Nome do Bot")
+          .setLabel("Apelido do Bot neste Servidor")
           .setStyle(TextInputStyle.Short)
           .setRequired(false)
           .setValue(currentName)
@@ -133,15 +129,6 @@ export function buildProfileModal(currentName = "") {
           .setCustomId("bot_avatar")
           .setLabel("URL da Foto de Perfil (Avatar)")
           .setPlaceholder("https://exemplo.com/avatar.png")
-          .setStyle(TextInputStyle.Short)
-          .setRequired(false)
-          .setMaxLength(500)
-      ),
-      new ActionRowBuilder().addComponents(
-        new TextInputBuilder()
-          .setCustomId("bot_banner")
-          .setLabel("URL do Banner do Perfil")
-          .setPlaceholder("https://exemplo.com/banner.png")
           .setStyle(TextInputStyle.Short)
           .setRequired(false)
           .setMaxLength(500)
